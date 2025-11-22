@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package twopc;
+
+service TwoPhaseCommit {
+    rpc VoteRequest(VoteRequestMsg) returns (VoteResponse);
+
+    rpc GlobalDecision(DecisionMsg) returns (DecisionAck);
+}
+
+message VoteRequestMsg {
+    string transaction_id = 1;
+    string operation = 2;
+    string filename = 3;
+    bytes file_data = 4;
+    FileMetadata metadata = 5;
+}
+
+message FileMetadata {
+    string filename = 1;
+    int64 size = 2;
+    string user = 3;
+}
+
+message VoteResponse {
+    string transaction_id = 1;
+    VoteDecision vote = 2;
+    string node_id = 3;
+    string reason = 4;
+}
+
+enum VoteDecision {
+    VOTE_COMMIT = 0;
+    VOTE_ABORT = 1;
+}
+
+message DecisionMsg {
+    string transaction_id = 1;
+    GlobalDecision decision = 2;
+}
+
+enum GlobalDecision {
+    GLOBAL_COMMIT = 0;
+    GLOBAL_ABORT = 1;
+}
+
+message DecisionAck {
+    string transaction_id = 1;
+    string node_id = 2;
+    bool success = 3;
+}

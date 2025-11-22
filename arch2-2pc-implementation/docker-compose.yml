@@ -1,0 +1,107 @@
+services:
+  upload:
+    build:
+      context: .
+      dockerfile: ./services/upload/Dockerfile
+    container_name: node1_coordinator
+    networks:
+      - twopc_network
+    environment:
+      - NODE_ID=1
+      - PYTHONUNBUFFERED=1
+    ports:
+      - "5003:5003"
+    depends_on:
+      - storage1
+      - storage2
+      - metadata1
+      - metadata2
+
+  storage1:
+    build:
+      context: .
+      dockerfile: ./storage/Dockerfile
+    container_name: node2_storage1
+    networks:
+      - twopc_network
+    environment:
+      - NODE_ID=2
+      - GRPC_PORT=50052
+      - PYTHONUNBUFFERED=1
+    ports:
+      - "50052:50052"
+    volumes:
+      - storage1_data:/storage
+
+  storage2:
+    build:
+      context: .
+      dockerfile: ./storage/Dockerfile
+    container_name: node3_storage2
+    networks:
+      - twopc_network
+    environment:
+      - NODE_ID=3
+      - GRPC_PORT=50053
+      - PYTHONUNBUFFERED=1
+    ports:
+      - "50053:50053"
+    volumes:
+      - storage2_data:/storage
+    
+  metadata1:
+    build:
+      context: .
+      dockerfile: ./metadata/Dockerfile
+    container_name: node4_metadata1
+    networks:
+      - twopc_network
+    environment:
+      - NODE_ID=4
+      - GRPC_PORT=50054
+      - HTTP_PORT=5005
+      - PYTHONUNBUFFERED=1
+    ports:
+      - "50054:50054"
+      - "5005:5005"
+  
+  metadata2:
+    build:
+      context: .
+      dockerfile: ./metadata/Dockerfile
+    container_name: node5_metadata2
+    networks:
+      - twopc_network
+    environment:
+      - NODE_ID=5
+      - GRPC_PORT=50055
+      - HTTP_PORT=5006
+      - PYTHONUNBUFFERED=1
+    ports:
+      - "50055:50055"
+      - "5006:5006"
+
+  client:
+    build:
+      context: .
+      dockerfile: ./client/Dockerfile
+    container_name: client
+    networks:
+      - twopc_network
+    environment:
+      - API_URL=http://upload:5003
+      - PYTHONUNBUFFERED=1
+    stdin_open: true
+    tty: true
+    command: /bin/bash
+
+networks:
+  twopc_network:
+    driver: bridge
+
+volumes:
+  storage1_data:
+  storage2_data:
+      
+
+  
