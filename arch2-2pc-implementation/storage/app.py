@@ -69,8 +69,8 @@ class StorageParticipant(twopc_pb2_grpc.TwoPhaseCommitServicer):
             )
         
         except Exception as e:
-            print(f" [Node {self.node_id}] Error: {e}")
-            print(f" [Node {self.node_id}] Voting: VOTE_ABORT")
+            print(f"[Node {self.node_id}] Error: {e}")
+            print(f"[Node {self.node_id}] Voting: VOTE_ABORT")
 
             return twopc_pb2.VoteResponse(
                 transaction_id=txn_id,
@@ -87,11 +87,11 @@ class StorageParticipant(twopc_pb2_grpc.TwoPhaseCommitServicer):
         decision = request.decision
 
         decision_str = "GLOBAL_COMMIT" if decision == twopc_pb2.GLOBAL_COMMIT else "GLOBAL_ABORT"
-        print(f" [Node {self.node_id}] Transaction ID: {txn_id}")
-        print(f" [Node {self.node_id}] Decision: {decision_str}")
+        print(f"[Node {self.node_id}] Transaction ID: {txn_id}")
+        print(f"[Node {self.node_id}] Decision: {decision_str}")
 
         if txn_id not in self.prepared_transactions:
-            print(f" [Node {self.node_id}] Transaction not found in prepared state")
+            print(f"[Node {self.node_id}] Transaction not found in prepared state")
             return twopc_pb2.DecisionAck(
                 transaction_id=txn_id,
                 node_id=self.node_id,
@@ -103,12 +103,12 @@ class StorageParticipant(twopc_pb2_grpc.TwoPhaseCommitServicer):
         try:
             if decision == twopc_pb2.GLOBAL_COMMIT:
                 os.rename(txn['temp_path'], txn['final_path'])
-                print(f" [Node {self.node_id}] COMMITED: {txn['temp_path']} to {txn['final_path']}")
+                print(f"[Node {self.node_id}] COMMITED: {txn['temp_path']} to {txn['final_path']}")
 
             else:
                 if os.path.exists(txn['temp_path']):
                     os.remove(txn['temp_path'])
-                print(f" [Node {self.node_id}] ABORTED: Deleted {txn['temp_path']}")
+                print(f"[Node {self.node_id}] ABORTED: Deleted {txn['temp_path']}")
 
             del self.prepared_transactions[txn_id]
 
@@ -119,7 +119,7 @@ class StorageParticipant(twopc_pb2_grpc.TwoPhaseCommitServicer):
             )
         
         except Exception as e:
-            print(f" [Node {self.node_id}] Error during {decision_str}: {e}")
+            print(f"[Node {self.node_id}] Error during {decision_str}: {e}")
             return twopc_pb2.DecisionAck(
                 transaction_id=txn_id,
                 node_id=self.node_id,

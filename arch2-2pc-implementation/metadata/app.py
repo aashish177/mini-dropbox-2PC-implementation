@@ -26,11 +26,11 @@ class MetadataParticipant(twopc_pb2_grpc.TwoPhaseCommitServicer):
         txn_id = request.transaction_id
         metadata = request.metadata
 
-        print(f" [Node {self.node_id}] Transaction ID: {txn_id}")
-        print(f" [Node {self.node_id}] Operation: {request.operation}")
-        print(f" [Node {self.node_id}] Filename: {metadata.filename}")
-        print(f" [Node {self.node_id}] Size: {metadata.size} bytes")
-        print(f" [Node {self.node_id}] User: {metadata.user}")
+        print(f"[Node {self.node_id}] Transaction ID: {txn_id}")
+        print(f"[Node {self.node_id}] Operation: {request.operation}")
+        print(f"[Node {self.node_id}] Filename: {metadata.filename}")
+        print(f"[Node {self.node_id}] Size: {metadata.size} bytes")
+        print(f"[Node {self.node_id}] User: {metadata.user}")
 
         try:
             if not metadata.filename or len(metadata.filename) == 0:
@@ -49,8 +49,8 @@ class MetadataParticipant(twopc_pb2_grpc.TwoPhaseCommitServicer):
                 'operation': request.operation
             }
 
-            print(f" [Node {self.node_id}] Metadata validation passed")
-            print(f" [Node {self.node_id}] Voting: VOTE_COMMIT")
+            print(f"[Node {self.node_id}] Metadata validation passed")
+            print(f"[Node {self.node_id}] Voting: VOTE_COMMIT")
 
             return twopc_pb2.VoteResponse(
                 transaction_id=txn_id,
@@ -58,8 +58,8 @@ class MetadataParticipant(twopc_pb2_grpc.TwoPhaseCommitServicer):
                 node_id=self.node_id
             )
         except Exception as e:
-            print(f" [Node {self.node_id}] Validation failed: {e}")
-            print(f" [Node {self.node_id}] Voting: VOTE_ABORT")
+            print(f"[Node {self.node_id}] Validation failed: {e}")
+            print(f"[Node {self.node_id}] Voting: VOTE_ABORT")
 
             return twopc_pb2.VoteResponse(
                 transaction_id=txn_id,
@@ -76,11 +76,11 @@ class MetadataParticipant(twopc_pb2_grpc.TwoPhaseCommitServicer):
         decision = request.decision
 
         decision_str = "GLOBAL_COMMIT" if decision == twopc_pb2.GLOBAL_COMMIT else "GLOBAL_ABORT"
-        print(f" [Node {self.node_id}] Transaction ID: {txn_id}")
-        print(f" [Node {self.node_id}] Decision: {decision_str}")
+        print(f"[Node {self.node_id}] Transaction ID: {txn_id}")
+        print(f"[Node {self.node_id}] Decision: {decision_str}")
 
         if txn_id not in self.prepared_transactions:
-            print(f" [Node {self.node_id}] Transaction not found in prepared state")
+            print(f"[Node {self.node_id}] Transaction not found in prepared state")
             return twopc_pb2.DecisionAck(
                 transaction_id=txn_id,
                 node_id=self.node_id,
@@ -97,9 +97,9 @@ class MetadataParticipant(twopc_pb2_grpc.TwoPhaseCommitServicer):
                     'path': f"/storage/{metadata['filename']}",
                     'version': 1
                 }
-                print(f" [Node {self.node_id}] COMMITED: Metadata saved for {metadata['filename']}")
+                print(f"[Node {self.node_id}] COMMITED: Metadata saved for {metadata['filename']}")
             else:
-                print(f" [Node {self.node_id}] ABORTED: Discarded metadata for {metadata['filename']}")
+                print(f"[Node {self.node_id}] ABORTED: Discarded metadata for {metadata['filename']}")
             
             del self.prepared_transactions[txn_id]
 
@@ -109,7 +109,7 @@ class MetadataParticipant(twopc_pb2_grpc.TwoPhaseCommitServicer):
                 success=True
             )
         except Exception as e:
-            print(f" [Node {self.node_id}] Error during {decision_str}: {e}")
+            print(f"[Node {self.node_id}] Error during {decision_str}: {e}")
             return twopc_pb2.DecisionAck(
                 transaction_id=txn_id,
                 node_id=self.node_id,
