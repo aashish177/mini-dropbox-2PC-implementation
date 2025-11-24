@@ -96,6 +96,10 @@ service TwoPhaseCommit {
 ### Prerequisites
 - Docker 20.10+
 - Docker Compose 2.0+
+- **Windows users**: Install [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/)
+- **Mac users**: Install [Docker Desktop for Mac](https://docs.docker.com/desktop/install/mac-install/)
+
+> **Note**: All commands in this guide work identically on Windows, Mac, and Linux. Docker containers provide a consistent Linux environment regardless of your host OS.
 
 ### Build and Start
 ```bash
