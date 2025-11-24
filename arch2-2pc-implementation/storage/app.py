@@ -11,7 +11,7 @@ app = Flask(__name__)
 
 STORAGE_PATH = "/storage"
 TEMP_PATH = "/storage/temp"
-METADATA_API = "http://metadata:5005/files"
+METADATA_API = "http://metadata1:5005/files"
 
 os.makedirs(STORAGE_PATH, exist_ok=True)
 os.makedirs(TEMP_PATH, exist_ok=True)
@@ -187,77 +187,56 @@ def serve_grpc(node_id, port):
 
 #     return jsonify({"path": save_path, "status": "saved"}), 200
 
-# # ---------------- Download ----------------
-# @app.route("/download", methods=["GET"])
-# def download_file():
-#     filename = request.args.get("filename")
-#     # username = request.args.get("user")
-#     # password = request.args.get("password")
+# ---------------- Download ----------------
+@app.route("/download", methods=["GET"])
+def download_file():
+    filename = request.args.get("filename")
+    if not filename:
+        return jsonify({"error": "Filename required"}), 400
 
-#     # if not filename or not username or not password:
-#     #     return jsonify({"error": "Filename, username, and password required"}), 400
+    # Check if file exists in storage
+    file_path = os.path.join(STORAGE_PATH, filename)
+    if not os.path.exists(file_path):
+        return jsonify({"error": "File not found"}), 404
 
-#     # Fetch metadata
-#     try:
-#         r = requests.get(f"{METADATA_API}/{filename}")
-#         r.raise_for_status()
-#         metadata = r.json()
-#     except Exception as e:
-#         return jsonify({"error": f"Failed to fetch metadata: {e}"}), 404
+    return send_file(file_path, as_attachment=True)
 
-#     # Validate username/password
-#     # if username.strip() != metadata["user"].strip() or password.strip() != metadata["password"].strip():
-#     #     return jsonify({"error": "Invalid username or password"}), 403
+# ---------------- Delete ----------------
+@app.route("/delete", methods=["DELETE"])
+def delete_file():
+    filename = request.args.get("filename")
+    if not filename:
+        return jsonify({"error": "Filename required"}), 400
 
-#     # Check if file exists
-#     file_path = metadata["path"]
-#     if not os.path.exists(file_path):
-#         return jsonify({"error": "File not found"}), 404
+    # Delete file from storage
+    file_path = os.path.join(STORAGE_PATH, filename)
+    try:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        else:
+            return jsonify({"error": "File not found"}), 404
+    except Exception as e:
+        return jsonify({"error": f"Failed to delete file: {e}"}), 500
 
-#     return send_file(file_path, as_attachment=True)
+    # Delete metadata
+    try:
+        r = requests.delete(f"{METADATA_API}/{filename}")
+        r.raise_for_status()
+    except Exception as e:
+        return jsonify({"error": f"Failed to delete metadata: {e}"}), 500
 
-# # ---------------- Delete ----------------
-# @app.route("/delete", methods=["DELETE"])
-# def delete_file():
-#     filename = request.args.get("filename")
-#     # username = request.args.get("user")
-#     # password = request.args.get("password")
-
-#     # if not filename or not username or not password:
-#     #     return jsonify({"error": "Filename, username, and password required"}), 400
-
-#     # Fetch metadata
-#     try:
-#         r = requests.get(f"{METADATA_API}/{filename}")
-#         r.raise_for_status()
-#         metadata = r.json()
-#     except Exception as e:
-#         return jsonify({"error": f"Failed to fetch metadata: {e}"}), 404
-
-#     # # Validate username/password
-#     # if username.strip() != metadata["user"].strip() or password.strip() != metadata["password"].strip():
-#     #     return jsonify({"error": "Invalid username or password"}), 403
-
-#     # Delete file
-#     try:
-#         file_path = metadata["path"]
-#         if os.path.exists(file_path):
-#             os.remove(file_path)
-#     except Exception as e:
-#         return jsonify({"error": f"Failed to delete file: {e}"}), 500
-
-#     # Delete metadata
-#     try:
-#         r = requests.delete(f"{METADATA_API}/{filename}")
-#         r.raise_for_status()
-#     except Exception as e:
-#         return jsonify({"error": f"Failed to delete metadata: {e}"}), 500
-
-#     return jsonify({"status": "deleted"}), 200
+    return jsonify({"status": "deleted"}), 200
 
 # ---------------- Main ----------------
 if __name__ == "__main__":
     node_id = os.environ.get('NODE_ID', '2')
     grpc_port = int(os.environ.get('GRPC_PORT', '50052'))
+    http_port = int(os.environ.get('HTTP_PORT', '5006'))
 
-    serve_grpc(node_id, grpc_port)
+    # Start gRPC server in a separate thread
+    grpc_thread = threading.Thread(target=serve_grpc, args=(node_id, grpc_port), daemon=True)
+    grpc_thread.start()
+
+    # Start Flask HTTP server in main thread
+    print(f"[Storage Node {node_id}] Starting HTTP server on port {http_port}...")
+    app.run(host="0.0.0.0", port=http_port)

@@ -27,9 +27,11 @@ services:
     environment:
       - NODE_ID=2
       - GRPC_PORT=50052
+      - HTTP_PORT=5008
       - PYTHONUNBUFFERED=1
     ports:
       - "50052:50052"
+      - "5008:5008"
     volumes:
       - storage1_data:/storage
 
@@ -43,9 +45,11 @@ services:
     environment:
       - NODE_ID=3
       - GRPC_PORT=50053
+      - HTTP_PORT=5009
       - PYTHONUNBUFFERED=1
     ports:
       - "50053:50053"
+      - "5009:5009"
     volumes:
       - storage2_data:/storage
     
@@ -81,6 +85,21 @@ services:
       - "50055:50055"
       - "5006:5006"
 
+  download:
+    build:
+      context: .
+      dockerfile: ./services/download/Dockerfile
+    container_name: download
+    networks:
+      - twopc_network
+    environment:
+      - PYTHONUNBUFFERED=1
+    ports:
+      - "5004:5004"
+    depends_on:
+      - storage1
+      - metadata1
+
   client:
     build:
       context: .
@@ -90,6 +109,7 @@ services:
       - twopc_network
     environment:
       - API_URL=http://upload:5003
+      - DOWNLOAD_URL=http://download:5004
       - PYTHONUNBUFFERED=1
     stdin_open: true
     tty: true
